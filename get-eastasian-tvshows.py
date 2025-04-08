@@ -15,23 +15,31 @@ LANG_CODES = {
     'Japanese': 'ja'
 }
 
+START_YEAR = '1980-01-01'  # Only shows first aired since Jan 1, 1980
+
 all_shows = []
 
 for lang_name, lang_code in LANG_CODES.items():
-    for page in range(1, 6):  # First 5 pages per language (up to 100 shows each)
+    page = 1
+    while True:
         discover_params = {
             'api_key': API_KEY,
             'with_original_language': lang_code,
             'sort_by': 'popularity.desc',
+            'first_air_date.gte': START_YEAR,
             'page': page
         }
         response = requests.get(BASE_URL_DISCOVER, params=discover_params)
         if response.status_code != 200:
             print(f"❌ Failed to fetch page {page} for {lang_name}: {response.text}")
-            continue
+            break
         data = response.json()
 
-        for show in data.get('results', []):
+        shows = data.get('results', [])
+        if not shows:
+            break  # No more shows
+
+        for show in shows:
             tv_id = show['id']
             name = show.get('name', '')
             original_lang = show.get('original_language', '')
@@ -39,7 +47,7 @@ for lang_name, lang_code in LANG_CODES.items():
             popularity = show.get('popularity', 0)
             first_air_date = show.get('first_air_date', '')
 
-            # Get detailed info per show
+            # Get detailed info
             detail_params = {'api_key': API_KEY}
             detail_resp = requests.get(f"{BASE_URL_DETAIL}{tv_id}", params=detail_params)
             if detail_resp.status_code != 200:
@@ -62,9 +70,11 @@ for lang_name, lang_code in LANG_CODES.items():
                 'season_count': season_count
             })
 
-            time.sleep(0.25)  # Rate limit: stay within 40 requests per 10 seconds
+            time.sleep(0.25)  # Respect TMDB rate limits
 
-# Save all shows to a CSV
+        page += 1  # Next page
+
+# Write results to CSV
 output_filename = 'east_asian_tvshows.csv'
 with open(output_filename, 'w', newline='', encoding='utf-8') as csvfile:
     fieldnames = ['id', 'name', 'language', 'original_language', 'first_air_date',
