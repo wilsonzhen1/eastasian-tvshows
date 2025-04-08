@@ -1,10 +1,10 @@
-name: Get episodes
+name: Get East Asian TV Shows
 
 on:
-  workflow_dispatch:  # Run manually from GitHub button
+  workflow_dispatch:  # Allow manual trigger
 
 permissions:
-  contents: write  # Allow GitHub Action to push changes
+  contents: write  # Allow GitHub Actions to commit changes
 
 jobs:
   scrape:
@@ -18,21 +18,21 @@ jobs:
       with:
         python-version: '3.8'
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
-        pip install requests pandas tqdm
+        pip install requests
 
-    - name: Run scraper
+    - name: Run TV show scraper
       env:
         TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
       run: |
-        python get-episodes.py
+        python get-eastasian-tvshows.py
 
-    - name: Commit changes
+    - name: Commit scraped data
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@users.noreply.github.com"
-        git add tv_shows_languages_detailed.csv
-        git commit -m "Update TV shows scraped from TMDB" || echo "No changes to commit"
+        git add east_asian_tvshows.csv
+        git commit -m "Update East Asian TV shows" || echo "No changes to commit"
         git push
 
