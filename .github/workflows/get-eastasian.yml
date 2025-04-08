@@ -1,0 +1,38 @@
+name: Get episodes
+
+on:
+  workflow_dispatch:  # Run manually from GitHub button
+
+permissions:
+  contents: write  # Allow GitHub Action to push changes
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      run: |
+        pip install requests pandas tqdm
+
+    - name: Run scraper
+      env:
+        TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+      run: |
+        python get-episodes.py
+
+    - name: Commit changes
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@users.noreply.github.com"
+        git add tv_shows_languages_detailed.csv
+        git commit -m "Update TV shows scraped from TMDB" || echo "No changes to commit"
+        git push
+
